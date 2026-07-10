@@ -9,8 +9,8 @@ description: Analyze, annotate, and explain C struct members. Use when the user 
 
 ## 触发词
 
-- "分析这个结构体" / "梳理一下" / "整理这个结构" / "注释一下"
-- "这个结构体代表什么" / "解释每个成员"
+- "分析这个结构体" / "梳理一下" / "梳理一下结构" / "梳理一下这个结构体" / "整理这个结构" / "注释一下"
+- "这个结构体代表什么" / "解释每个成员" / "梳理这个结构体"
 - "annotate this struct" / "explain the fields"
 - 用户贴了一段 struct 定义并期望逐成员注释
 
@@ -26,10 +26,10 @@ description: Analyze, annotate, and explain C struct members. Use when the user 
 ### Step 2: 决定注释粒度
 
 - **短结构体（≤15 个成员）**：每个成员都注释
-- **长结构体（>15 个成员）**：所有成员都注释，但对关键成员用 `⚠️ 核心` 标记强调，普通成员保持简洁
-- **超长结构体（>30 个成员）**：所有成员都注释，但普通成员用简短的一行注释，核心成员用 `⚠️ 核心` 标记并写详细注释
+- **长结构体（>15 个成员）**：所有成员都注释，但对关键成员用 `★` 标记强调，普通成员保持简洁
+- **超长结构体（>30 个成员）**：所有成员都注释，但普通成员用简短的一行注释，核心成员用 `★` 标记并写详细注释
 
-标记为 `⚠️ 核心` 的成员标准：
+标记为 `★` 的成员标准：
 - 函数指针（回调 / ops）
 - 链表头 / 树节点（体现拓扑关系）
 - 状态字段（决定了域的生命周期）
@@ -43,6 +43,7 @@ description: Analyze, annotate, and explain C struct members. Use when the user 
 - **一行注释，说清"是什么"和"干什么用"**，不写显而易见的事
 - **用术语，不啰嗦** —— Master 是内核工程师，不需要科普基础知识
 - **点明关联** —— 如果某个字段跟另一个结构体/框架机制有关联，指出来
+- **涉及函数名/文件名/节点名时，必须 grep 确认存在，不准脑补**（如"被 xxx_sysfs 改写"这种话，先 grep 找到真正的调用者再说）
 - **格式**：`/* 注释内容 */` 跟在成员后面（保留原格式的缩进）
 - **不修改原代码**，只在每个成员后面追加注释
 - **输出到终端**，不写文件
@@ -53,8 +54,8 @@ description: Analyze, annotate, and explain C struct members. Use when the user 
 // ========== 验证自: <源文件路径>:<行号> ==========
 
 struct foo {
-    int important_field;    /* ⚠️ 核心: 这个字段决定了xxx，关联到yyy */
-    struct list_head node;  /* ⚠️ 核心: 链入全局zzz链表 */
+    int important_field;    /* ★: 这个字段决定了xxx，关联到yyy */
+    struct list_head node;  /* ★: 链入全局zzz链表 */
     char *name;             /* 人类可读的名字，sysfs 展示用 */
     u64 timestamp;          /* 最后状态切换时间，用于统计 */
     ...
@@ -74,3 +75,4 @@ struct foo {
 - ❌ 把注释写到文件里而非输出到终端
 - ❌ 写一大段多行注释/docstring（保持单行）
 - ❌ 跳过"不重要"的成员不注释（每个成员都要有注释）
+- ❌ 脑补函数名/节点名/文件名（如"wb_config_sysfs 会改写此位"）—— 先 grep 确认真正的调用者再写
