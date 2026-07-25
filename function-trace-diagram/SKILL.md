@@ -31,6 +31,11 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
 
 ## 输出格式
 
+### 重要！ANSI 颜色输出规则
+
+[SYMBOL] **禁止用 markdown 代码块（\`\`\`text 或 \`\`\`）包裹 ASCII 图。** 代码块会吞掉 ANSI 转义码，导致颜色不显示。
+[SYMBOL] **必须直接以纯文本形式输出。** 图前用 `---` 分隔线，图后正常写配色说明。
+
 ### 简易版（Simple Version）
 
 - 深度控制在 2~4 层
@@ -39,9 +44,8 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
 - 用 `①②③④⑤` 编号关键阶段
 - 结尾一行总结文件路径
 
-示例格式：
+示例格式（[SYMBOL] 注意：下面是纯文本，不包裹在代码块中）：
 
-``` text
   [1;36mentry_func()[0m
     │
     ├── [1;34m[阶段一]  做什么事 / 什么数据结构[0m
@@ -52,7 +56,6 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
     │     └── [90m← 这 N 个回调构成了完整能力[0m
     ├── [1;34m[阶段四]  全局注册[0m    [1;33mlist_add → global_list[0m
     └── [1;34m[阶段五]  收尾[0m     [1;35mxxx_debug_add()[0m
-```
 
 ### 详细版（Detailed Version）
 
@@ -62,9 +65,8 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
 - 标注 sysfs 节点创建、通知链调用
 - 每个重要步骤标行号
 
-示例格式：
+示例格式（[SYMBOL] 注意：纯文本输出，不用代码块）：
 
-``` text
   [1;36mentry_func(cpu)[0m                                                     [90m// file.c:行号[0m
     │
     ├─ ① [1;34mkey_check()[0m
@@ -111,7 +113,6 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
     ├─ ③ [1;35mkobject_uevent(KOBJ_ADD)[0m           [90m← 通知 udev[0m
     ├─ ④ [1;35mdriver->ready(policy)[0m               [90m← 最后一哆嗦[0m
     └─ ⑤ [new] [1;35mthermal_cooling_register(policy)[0m [90m← 温控可限制频率[0m
-```
 
 ## 工作流
 
