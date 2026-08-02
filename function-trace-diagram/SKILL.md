@@ -16,25 +16,160 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
 - "这个流程是怎么走的" / "怎么个调用栈"
 - "trace the call flow" / "draw the call stack"
 
-## 配色方案（紫色/蓝色/青色为主色调）
+## ANSI 配色方案（紫色/蓝色/青色为主色调）
+
+### 颜色编码表（直接复制粘贴使用）
+
+下面的每个颜色标记中，`ESC` 代表一个 **字面 ESC 字符（ASCII 27，0x1B）**，不能用 `\033` 字符串代替。你需要在输出时嵌入真正的 ESC 字节。
+
+颜色标记 + 要着色的文本 + 重置标记：
 
 ```
-[1;36m 青 色[0m — 顶层入口 / VFS / 通用框架层 (syscall、configfs、driver_register 等)
-[1;34m 蓝 色[0m — 中间层 / 核心子系统 / 关键操作
-[1;35m 紫 色[0m — 底层回调 / 驱动层 / 硬件操作
-[1;33m 黄 色[0m — 目录路径 / 文件路径 / 节点名称
-[1;32m 绿 色[0m — 资源分配动作 (malloc, kzalloc, init, create 等)
-[1;37m 白色亮体[0m — 关键变量 / 数据结构名 / 重要标志位
-[90m   灰 色[0m — 注释、说明文字、行号
-[1;31m 红 色[0m — 保底备用：特别关键的单点（★ 标注）
+ESC[1;36m  ← 青色粗体开始（顶层入口 / VFS / 框架层）
+ESC[1;34m  ← 蓝色粗体开始（中间层 / 核心子系统）
+ESC[1;35m  ← 紫色粗体开始（底层回调 / 驱动层 / 硬件操作）
+ESC[1;33m  ← 黄色粗体开始（目录路径 / 文件路径 / 节点名）
+ESC[1;32m  ← 绿色粗体开始（资源分配动作: kzalloc, init, create 等）
+ESC[1;37m  ← 白色亮体开始（关键变量 / 数据结构名 / 重要标志位）
+ESC[1;31m  ← 红色粗体开始（关键转折点 / 失败返回，★ 标注用）
+ESC[90m    ← 灰色开始（注释、说明文字、行号）
+ESC[0m     ← 关闭所有颜色（每条着色文本结束必须加这个）
 ```
+
+用法示例：`ESC[1;36mconfigfs_mkdir()ESC[0m` → 输出后 `configfs_mkdir()` 就变成青色。
+
+### 如何生成真正的 ESC 字符
+
+在 Claude Code 中，你要在文本里嵌入真正的 ESC 字节（0x1b），方法：
+- 如果终端支持：输入 `Ctrl+V` 然后 `Ctrl+[`（会插入一个字面的 ESC）
+- 如果输出编程语言：写 `\x1b` 或 `\033` 在字符串中
+- **最可靠的方法**：直接复制下面这行中看不见的 ESC 字符：
+
+``  ← 这行只有一个 ESC 字符。复制它。
+
+### 三条铁律：不能犯的错
+
+**错误1：用 markdown 代码块包裹**
+```
+│  └─ [1;36mkswapd() ← 代码块会吞ESC，颜色不显示
+```
+→ 正确做法：直接输出，不在 ``` 代码块内。
+
+**错误2：用行内反引号包裹颜色文本**
+```
+`kswapd()` ← 反引号也会吞ESC
+```
+→ 正确做法：函数名直接用颜色包裹，不加 `。
+
+**错误3：用 \033 字符串代替真正的 ESC 字节**
+```
+\033[1;36m ← 终端看到的是反斜杠+数字，不是颜色
+```
+→ 正确做法：输出真正的 0x1B 字节。
+
+### 每次输出后必须附配色表
+
+图下方必须附一行配色说明：
+
+```
+配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心逻辑  ESC[1;35mPurpleESC[0m=底层回调  ESC[1;33mYellowESC[0m=路径  ESC[1;32mGreenESC[0m=分配  ESC[90mGrayESC[0m=注释
+```
+
+---
 
 ## 输出格式
 
-### 重要！ANSI 颜色输出规则
+### 简易版（Simple Version）
 
-[SYMBOL] **禁止用 markdown 代码块（\`\`\`text 或 \`\`\`）包裹 ASCII 图。** 代码块会吞掉 ANSI 转义码，导致颜色不显示。
-[SYMBOL] **必须直接以纯文本形式输出。** 图前用 `---` 分隔线，图后正常写配色说明。
+- 深度控制在 2~4 层
+- 用 ESC[1;34m[阶段标签]ESC[0m 将步骤分组
+- 每一步只列核心操作，不展开子调用
+- 用 ①②③④⑤ 编号关键阶段
+- 结尾一行总结文件路径
+
+示例格式（输出时 ANSI 必须生效）：
+
+---
+
+ESC[1;36mentry_func()ESC[0m
+  │
+  ├── ESC[1;34m[阶段一]ESC[0m  做什么事 / 什么数据结构
+  ├── ESC[1;34m[阶段二]ESC[0m  xxx初始化
+  ├── ESC[1;34m[阶段三]ESC[0m  绑定 / 注册
+  │     ├── ESC[1;35msub_callback_A()ESC[0m
+  │     ├── ESC[1;35msub_callback_B()ESC[0m
+  │     └── ESC[90m← 这 N 个回调构成了完整能力ESC[0m
+  ├── ESC[1;34m[阶段四]ESC[0m  全局注册    ESC[1;33mlist_add → global_listESC[0m
+  └── ESC[1;34m[阶段五]ESC[0m  收尾     ESC[1;35mxxx_debug_add()ESC[0m
+
+配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心  ESC[1;35mPurpleESC[0m=底层  ESC[1;33mYellowESC[0m=路径  ESC[90mGrayESC[0m=注释
+
+---
+
+### 详细版（Detailed Version）
+
+- 深度追到子函数的子函数，不设上限
+- 标注关键变量的赋值和状态变化
+- 标注锁的获取/释放
+- 每个重要步骤标行号
+
+示例格式（输出时 ANSI 必须生效）：
+
+---
+
+ESC[1;36mentry_func(cpu)ESC[0m                                                     ESC[90m// file.c:行号ESC[0m
+  │
+  ├─ ① ESC[1;34mkey_check()ESC[0m
+  │     ├─ 有 → ESC[1;35mfast_path()ESC[0m
+  │     │        ├─ stop → 更新掩码 → restart
+  │     │        └─ （快速路径：跳过重复初始化）
+  │     │
+  │     └─ 无 → ESC[1;37mnew_policy = trueESC[0m
+  │           └─ ESC[1;35mpolicy_alloc(cpu)ESC[0m                      ESC[90m// file.c:1257ESC[0m
+  │                ├─ ESC[1;32mkzalloc(policy)ESC[0m
+  │                ├─ ESC[1;32mcpumask_var_t initESC[0m               ESC[90m(cpus / related_cpus)ESC[0m
+  │                ├─ ESC[1;32mkobject_init_and_add()ESC[0m           ESC[90m→ /sys/.../policyNESC[0m
+  │                ├─ ESC[1;35minit_rwsem(&policy->rwsem)ESC[0m       ESC[90m// 保护 policy 字段ESC[0m
+  │                ├─ ESC[1;35mfreq_constraints_init()ESC[0m          ESC[90m// QoS 约束树 (min/max)ESC[0m
+  │                ├─ ESC[1;32m注册通知链ESC[0m
+  │                │   └─ ESC[1;35mfreq_qos_add_notifier(MIN/MAX)ESC[0m
+  │                │       └─ 当 thermal / 用户空间改频率限制时触发回调
+  │                └─ ESC[1;35mINIT_WORK(&update, handle_update)ESC[0m
+  │                     └─ 延迟更新（atomic 上下文触发）
+  │
+  ├─ ② ESC[1;34m核心初始化ESC[0m    ESC[1;35monline_sub(policy, cpu, new_policy)ESC[0m   ESC[90m// file.c:1389ESC[0m
+  │     ├─ guard(policy_write)          ESC[90m← 拿写锁，scope guard 自动释放ESC[0m
+  │     ├─ policy->cpu = cpu
+  │     ├─ policy->governor = NULL
+  │     ├─ [new] ESC[1;35mdriver->init(policy)ESC[0m
+  │     │     └─ 填充 cpuinfo / freq_table / transition_latency
+  │     ├─ ESC[1;35mcpumask_and(policy->cpus, cpu_online_mask)ESC[0m
+  │     ├─ [new] ESC[1;32mper-cpu 映射建立ESC[0m + ESC[1;33msysfs 软链接ESC[0m
+  │     ├─ [new] Qos Request init
+  │     │     ESC[1;35mblocking_notifier_call_chain(CPUFREQ_CREATE_POLICY)ESC[0m
+  │     ├─ ESC[1;35mdriver->get() → policy->curESC[0m  ESC[90m← 读真实频率ESC[0m
+  │     └─ ESC[1;34m★ init_policy(policy)ESC[0m   ESC[90m// 决定 governor 并启动ESC[0m
+  │          └─ ESC[1;35mcpufreq_set_policy()ESC[0m
+  │               ├─ exit 旧 governor → ESC[1;35minit_governor()ESC[0m → ESC[1;35mstart()ESC[0m
+  │               └─ sysfs 通知
+  │
+  ├─ ③ ESC[1;35mkobject_uevent(KOBJ_ADD)ESC[0m           ESC[90m← 通知 udevESC[0m
+  └─ ⑤ [new] ESC[1;35mthermal_cooling_register(policy)ESC[0m ESC[90m← 温控可限制频率ESC[0m
+
+配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心流程  ESC[1;35mPurpleESC[0m=底层/驱动  ESC[1;33mYellowESC[0m=路径/链表  ESC[1;32mGreenESC[0m=分配/初始化  ESC[1;37mWhiteESC[0m=关键变量  ESC[1;31mRedESC[0m=失败/错误  ESC[90mGrayESC[0m=注释
+
+---
+
+### 颜色使用分布指导
+
+| 层 | 颜色 | 占图比例建议 |
+|---|------|-------------|
+| 顶层框架入口 | ESC[1;36mCyanESC[0m | ~15% |
+| 中间核心逻辑 | ESC[1;34mBlueESC[0m | ~30% |
+| 底层驱动/回调 | ESC[1;35mPurpleESC[0m | ~25% |
+| 路径/文件名 | ESC[1;33mYellowESC[0m | ~10% |
+| 资源分配操作 | ESC[1;32mGreenESC[0m | ~5% |
+| 注释/行号 | ESC[90mGrayESC[0m | ~15% |
 
 ### 简易版（Simple Version）
 
@@ -127,27 +262,46 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
 
 ### Step 3: 分层归类
 
-| 层级 | 颜色 | 典型函数 |
-|------|------|---------|
-| 顶层 (框架/系统调用/入口) | 青色 | `vfs_write()`, `configfs_mkdir()`, `cpufreq_online()`, `xxx_store()` |
-| 中间层 (子系统核心逻辑) | 蓝色 | `xxx_alloc()`, `xxx_bind()`, `xxx_init()`, 核心操作函数 |
-| 底层 (驱动/硬件/回调) | 紫色 | `ops->xxx()`, `driver->xxx()`, `xxx_open()`, 具体回调 |
+| 层级 | ANSI 代码 | 典型函数 |
+|------|----------|---------|
+| 顶层 (框架入口) | ESC[1;36m (cyan bold) | vfs_write(), configfs_mkdir(), syscall entry |
+| 中间层 (核心逻辑) | ESC[1;34m (blue bold) | xxx_bind(), xxx_init(), balance_pgdat() |
+| 底层 (驱动/回调) | ESC[1;35m (purple bold) | ops->xxx(), fsg_alloc(), shrink_node() |
+| 路径/文件名 | ESC[1;33m (yellow bold) | /sys/..., global_list, func_list |
+| 分配/创建 | ESC[1;32m (green bold) | kzalloc(), init_rwsem(), kthread_run() |
+| 关键变量 | ESC[1;37m (white bright) | kswapd_order, func_list, max_active |
+| 注释/行号 | ESC[90m (gray) | // file.c:123, ← 说明文字 |
+| 错误/警告 | ESC[1;31m (red bold) | -EINVAL, goto retry, BUG() |
 
 ### Step 4: 输出两个版本
 
-- 简易版在前，用分隔线隔开
+- **先执行自检清单**：真正的 ESC 字节？不在代码块中？不在反引号中？三项全部通过再输出。
+- 简易版在前，用 `---` 分隔线隔开
 - 详细版在后
-- 每个版本下方标注配色说明
+- 每个版本下方标注配色表（用真正的 ANSI 着色文本展示每个颜色）
 
 ### Step 5: 收尾
 
 图后 1-2 句总结核心设计意图或最关键的跳转点。
 
+## 输出前自检清单（强制）
+
+在输出每个带颜色的 ASCII 图之前，先回答以下 3 个问题：
+
+1. **ESC 字符是真的吗？** 我的输出文本中，颜色标记开头是真正的 ESC 字节（0x1b），还是写了 `\033` 四个字符？只有真正的 0x1B 才能让终端变色。
+2. **代码块有没有包住图？** 图前有没有 ` ```text ` 或 ` ``` ` ？图后有没有 ` ``` ` ？如果有，全部删掉。
+3. **反引号有没有包住着色文本？** 类似 ` [1;35mfsg_alloc() [0m ` 这种上一行和下一行的颜色部分，有没有被反引号 ` ` ` 包裹？如果有，把反引号去掉。
+
+如果以上 3 点全部检查通过，颜色就会正常显示。
+
 ## 反例（禁止）
 
-- [SYMBOL] 没查源码直接画图（脑补函数名）
-- [SYMBOL] 用模糊描述代替函数名（"内核做了一些处理"）
-- [SYMBOL] 忘记输出两个版本（只出了简易版或只出了详细版）
-- [SYMBOL] 没有颜色标注层级
-- [SYMBOL] 图后没有配色说明
-- [SYMBOL] 漏掉关键跳转点
+- 没查源码直接画图（脑补函数名）
+- 用模糊描述代替函数名（"内核做了一些处理"）
+- 忘记输出两个版本（只出了简易版或只出了详细版）
+- **用代码块包裹 ANSI 着色图 → 颜色全挂**
+- **用反引号包裹着色文本 → 颜色局部挂**
+- **用 \033 四字符代替真正的 ESC 字节 → 颜色全挂**
+- 没有颜色标注层级
+- 图后没有配色说明
+- 配色表中写了颜色名但没有附实际的 ANSI 标签
