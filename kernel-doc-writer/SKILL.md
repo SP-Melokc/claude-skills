@@ -66,7 +66,7 @@ Write to `C:\Users\15656\Documents\my_md\melokc_linux_study\<topic>.md`.
 Follow the detailed style guide in [references/style-guide.md](references/style-guide.md). Key rules:
 
 - Code blocks use ` ```C++ ` (not ` ```c `)
-- Callouts use `<callout emoji="...">...</callout>` with specific emoji semantics
+- Callouts use Obsidian standard `> [!type]` syntax (type = note/info/tip/warning/important/question/abstract/summary)
 - Key conclusions in **bold**
 - Every code block preceded by a Chinese lead-in sentence
 - Structure: 核心总结 → 关键结构体 → 核心函数 → optional 关联
@@ -105,6 +105,6 @@ Offer to run the beginner-doc-review agent. Only proceed if Master agrees.
 | `.claude/agents/source-verifier.md` | Source verification agent |
 | `.claude/agents/beginner-doc-review.md` | Beginner review agent |
 
-## Dependency: obsidian-markdown
+## Reference: obsidian-markdown
 
-This skill's callout syntax (`<callout emoji="">`) differs from Obsidian's standard (`> [!type]`). However, the [obsidian-markdown](obsidian-markdown/SKILL.md) skill is useful when the user wants to add wikilinks, embeds, or Obsidian properties to the generated document. Invoke it explicitly when needed.
+For advanced Obsidian features (wikilinks, embeds, properties, callout syntax, etc.), the [obsidian-markdown](obsidian-markdown/SKILL.md) skill is available. Invoke it explicitly when needed.

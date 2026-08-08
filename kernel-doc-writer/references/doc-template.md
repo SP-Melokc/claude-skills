@@ -17,15 +17,13 @@ For overview/newcomer docs (like usb.md, ufs.md, pinctrl.md, pinmux.md, regulato
 
 1. **第一条核心洞察**
 
-<callout emoji="☠️">
-定义性说明，展开细节
-</callout>
+> [!info]
+> 定义性说明，展开细节
 
 2. **第二条核心洞察**
 
-<callout emoji="😇">
-展开描述...
-</callout>
+> [!note]
+> 展开描述...
 
 3. **第三条核心洞察**
 
@@ -57,17 +55,16 @@ For overview/newcomer docs (like usb.md, ufs.md, pinctrl.md, pinmux.md, regulato
 
 ### struct xxx_desc — <一句话定位>
 
-<callout emoji="☠️">
-xxx_desc 是 <一句话定义>
-</callout>
+> [!info]
+> xxx_desc 是 &lt;一句话定义&gt;
 
-` + "``" + "`C++" + `
+```C++
 // <path/to/header.h:line>
 struct xxx_desc {
     const char *name;         // 字段注释
     int key_field;            // ★ 核心字段的注释
 };
-` + "``" + "`" + `
+```
 
 **关键字段解读：**
 - **key_field**: 为什么重要，和其他结构体怎么关联
@@ -81,17 +78,16 @@ struct xxx_desc {
 
 ### 💎xxx_register() — provider 注册入口
 
-<callout emoji="☠️">
-<一句话说明这个函数做什么>
-</callout>
+> [!important]
+> &lt;一句话说明这个函数做什么&gt;
 
-` + "``" + "`C++" + `
+```C++
 // drivers/xxx/core.c:line
 int xxx_register(struct device *dev, const struct xxx_desc *desc)
 {
     ...
 }
-` + "``" + "`" + `
+```
 
 注册流程：
 
@@ -133,9 +129,8 @@ pmic {
 
 ## 六、与其他子系统的关联（如适用）
 
-<callout emoji="☠️">
-<how this subsystem relates to others in the power/IO stack>
-</callout>
+> [!info]
+> &lt;how this subsystem relates to others in the power/IO stack&gt;
 
 ### 7.1 全景架构
 ASCII diagram showing layers

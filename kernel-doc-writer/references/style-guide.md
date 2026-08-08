@@ -19,23 +19,22 @@ This is the authoritative reference for Master's document writing style. Extract
 
 - Numbered list (1. 2. 3.), each entry is an independent core insight
 - **Heavy use of bold** to emphasize key conclusions
-- Interleave `<callout>` to expand details without bloating the main text
+- Interleave Obsidian callouts (`> [!type]`) to expand details without bloating the main text
 
 ### Callout usage here:
 - Expand on a numbered item's details
 - Hardware behavior descriptions ("CPU硬件自动做了这些事情")
-- Emoji preference: 😇 (gentle explanation), 🥵 (complex details), 👺 (important warning), 👽 (personal insight)
+- Callout types: `> [!note]` (gentle), `> [!info]` (details), `> [!warning]` (cautions), `> [!tip]` (insights), `> [!important]` (key conclusions), `> [!question]` (uncertain points)
 
 ### Example pattern:
 ```markdown
 1. Core conclusion in one sentence, **key point in bold**
 
-<callout emoji="😇">
-Expanded description, possibly step-by-step hardware/software behavior...
-
-(1) First step does X
-(2) Second step does Y
-</callout>
+> [!note]
+> Expanded description, possibly step-by-step hardware/software behavior...
+>
+> (1) First step does X
+> (2) Second step does Y
 
 2. Next core conclusion...
 ```
@@ -51,7 +50,7 @@ Each struct as H2 heading:
 ```
 
 ### Organization order:
-1. **Definition first**: One-line callout explaining the struct's role (emoji: ☠️)
+1. **Definition first**: One-line callout explaining the struct's role (`> [!info]`)
 2. **Relationship diagram**: Image/diagram showing inter-struct relationships
 3. **Full struct code**: With kernel comments, trim non-critical fields for long structs
 4. **Key field annotations**: Inline Chinese comments on important fields
@@ -61,9 +60,8 @@ Each struct as H2 heading:
 ```markdown
 ## struct irq_desc
 
-<callout emoji="☠️">
-irq_desc, 即中断描述符, 与中断号/中断线一一对应.
-</callout>
+> [!info]
+> irq_desc, 即中断描述符, 与中断号/中断线一一对应.
 
 ![](relationship diagram)
 
@@ -166,26 +164,41 @@ set_handle_irq(gic_handle_irq);
 
 ---
 
-## Callout Emoji Semantics
+## Callout Type Semantics (Obsidian Standard)
 
-| Emoji | When to use |
-|-------|------------|
-| ☠️ | Definitive explanation ("xxx即xxx"), struct/concept definitions |
-| 😇 | Gentle expansion, step-by-step, hardware behavior description |
-| 🥵 | Complex details, flag lists, easily confused content |
-| 👺 | Important warnings / cautions |
-| 👽 | Personal insights / observations ("目前来看...") |
-| 😉 | Code structure comments |
-| 💎 | Mark core functions (H2 title) |
-| 🌠 | Mark key sub-functions (H3 title) |
-| ❤ | Mark important flows (H2 title) |
-| 💡 | Mark questionable points that need verification |
+Use Obsidian standard `> [!type]` callout syntax. All content lines inside the callout **must** be prefixed with `>`.
+
+| Type | When to use |
+|------|------------|
+| `> [!note]` | General explanation, background context, step-by-step description |
+| `> [!info]` | Struct/concept definitions ("xxx即xxx"), flag lists, framework details |
+| `> [!important]` | Key conclusions, critical design points, core call chain entry points |
+| `> [!warning]` | Cautions, anti-patterns, things that will break |
+| `> [!tip]` | Insights, best practices, coding tricks, architecture observations |
+| `> [!question]` | Uncertain points, unanswered questions, items needing verification |
+| `> [!abstract]` | Opening summary, document TL;DR |
+| `> [!summary]` | Closing recap, key takeaways |
 
 ### Callout content types:
-- **Definition** (☠️): One-sentence definition + expanded explanation
-- **Step-by-step** (😇): Numbered list, hardware + software separated
-- **Flag collection** (🥵): List related flags and meanings
-- **Warning** (👺): Key conclusions, often bold
+- **Definition** (`[!info]`): One-sentence definition + expanded explanation
+- **Step-by-step** (`[!note]`): Numbered list, hardware + software separated
+- **Flag collection** (`[!info]`): List related flags and meanings
+- **Warning** (`[!warning]`): Key conclusions that must not be missed, often bold
+- **Core entry** (`[!important]`): Mark critical function call chain starting points
+
+### Callout format example:
+```markdown
+> [!warning]
+> **poll=false：这条频率设置是异步的。** 发送完 SCMI 消息后立即返回，
+> 不阻塞等待固件完成 DVFS。仅当订阅了 LEVEL_CHANGED 通知时才能
+> 得到确切的完成确认。
+```
+
+### H2/H3 function heading emoji:
+These are inline emoji in headings (not callouts), kept for visual navigation:
+- 💎 = core entry functions (H2)
+- 🌠 = key sub-functions (H3)
+- ❤ = important flows (H2)
 
 ---
 
