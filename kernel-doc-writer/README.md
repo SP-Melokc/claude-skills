@@ -24,7 +24,7 @@ Every generated document follows a three-section skeleton:
 
 ## Style conventions
 
-- Code blocks: ` ```C++ ` (never ` ```c `)
+- Code blocks: ` ```c ` (never ` ```C++ `)
 - Callouts: `<callout emoji="☠️">` with specific emoji semantics
 - Platform: ARM64 first
 - Language: Chinese, with colloquial engineer tone

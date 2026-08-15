@@ -65,7 +65,7 @@ Write to `C:\Users\15656\Documents\my_md\melokc_linux_study\<topic>.md`.
 
 Follow the detailed style guide in [references/style-guide.md](references/style-guide.md). Key rules:
 
-- Code blocks use ` ```C++ ` (not ` ```c `)
+- Code blocks use ` ```c ` (not ` ```C++ `)
 - Callouts use Obsidian standard `> [!type]` syntax (type = note/info/tip/warning/important/question/abstract/summary)
 - Key conclusions in **bold**
 - Every code block preceded by a Chinese lead-in sentence

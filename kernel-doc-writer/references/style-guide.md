@@ -65,7 +65,7 @@ Each struct as H2 heading:
 
 ![](relationship diagram)
 
-` ``C++
+` ``c
 /**
  * struct irq_desc - interrupt descriptor
  * ...kernel comments preserved...
@@ -76,7 +76,7 @@ struct irq_desc {
 ` ``
 
 ### Istate  (H3, enum values follow their struct)
-` ``C++
+` ``c
 enum {
     IRQS_AUTODETECT = 0x00000001,
     ...
@@ -120,7 +120,7 @@ H1: 核心函数
 This function traverses all processes, calling oom_evaluate_task() to evaluate/select a suitable process to kill.
 ← One sentence saying what the function does
 
-` ``C++
+` ``c
 /*
  * Simple selection loop. We choose the process with the highest number of 'points'.
  */
@@ -155,12 +155,12 @@ set_handle_irq(gic_handle_irq);
 
 | Content Type | Label |
 |-------------|-------|
-| C kernel code | ```C++ |
+| C kernel code | ```c |
 | Assembly / call stacks | ```Plain Text or ```XML |
 | Register ops / inline asm | ```JavaScript |
-| Macro / preprocessor | ```C++ |
+| Macro / preprocessor | ```c |
 
-**Always use ```C++ for C code, never ```c.**
+**Always use ```c for C code.**
 
 ---
 
@@ -231,7 +231,7 @@ These are inline emoji in headings (not callouts), kept for visual navigation:
 1. [ ] H1: 核心总结 — 3~10 numbered insights
 2. [ ] H1: 关键结构体 — each key struct as H2, full definition + key field annotations
 3. [ ] H1: 核心函数 — nested H2→H3→H4..., each level with full source + Chinese explanation
-4. [ ] Code uses ```C++ label
+4. [ ] Code uses ```c label
 5. [ ] Callouts use correct emoji
 6. [ ] Key conclusions bolded
 7. [ ] Complete call chains shown

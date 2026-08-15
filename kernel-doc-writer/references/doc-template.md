@@ -58,7 +58,7 @@ For overview/newcomer docs (like usb.md, ufs.md, pinctrl.md, pinmux.md, regulato
 > [!info]
 > xxx_desc 是 &lt;一句话定义&gt;
 
-```C++
+```c
 // <path/to/header.h:line>
 struct xxx_desc {
     const char *name;         // 字段注释
@@ -81,7 +81,7 @@ struct xxx_desc {
 > [!important]
 > &lt;一句话说明这个函数做什么&gt;
 
-```C++
+```c
 // drivers/xxx/core.c:line
 int xxx_register(struct device *dev, const struct xxx_desc *desc)
 {
@@ -175,7 +175,7 @@ Key differences from intro docs:
 ## Anti-Patterns
 
 ❌ Skipping the architecture explanation and jumping straight to code
-❌ Using ````c` instead of ````C++`
+❌ Using ````C++` instead of ````c`
 ❌ Writing multi-paragraph docstrings or multi-line comments
 ❌ Adding features/abstractions beyond what the task requires
 ❌ Forgetting the source verification step
