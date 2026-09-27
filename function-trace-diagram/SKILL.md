@@ -1,6 +1,6 @@
 ---
 name: function-trace-diagram
-description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/蓝色/青色标注不同层级。每次输出简易版+详细版两个版本。触发词：梳理函数调用、追踪调用栈、画调用图、trace call flow、怎么走的。
+description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用蓝/黄/紫标注函数层级（入口/骨干/叶子）。每次输出简易版+详细版两个版本。触发词：梳理函数调用、追踪调用栈、画调用图、trace call flow、怎么走的。
 ---
 
 # Function Trace Diagram Skill
@@ -16,7 +16,7 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
 - "这个流程是怎么走的" / "怎么个调用栈"
 - "trace the call flow" / "draw the call stack"
 
-## ANSI 配色方案（紫色/蓝色/青色为主色调）
+## ANSI 配色方案（蓝/黄/紫标注函数层级）
 
 ### 颜色编码表（直接复制粘贴使用）
 
@@ -25,16 +25,26 @@ description: 绘制带 ANSI 颜色的 ASCII 函数调用追踪图，用紫色/�
 颜色标记 + 要着色的文本 + 重置标记：
 
 ```
-ESC[1;36m  ← 青色粗体开始（顶层入口 / VFS / 框架层）
-ESC[1;34m  ← 蓝色粗体开始（中间层 / 核心子系统）
-ESC[1;35m  ← 紫色粗体开始（底层回调 / 驱动层 / 硬件操作）
-ESC[1;33m  ← 黄色粗体开始（目录路径 / 文件路径 / 节点名）
+ESC[1;36m  ← 青色粗体开始（顶层框架入口 / VFS / 子系统注册）
+ESC[1;34m  ← 蓝色粗体开始（核心入口函数 / 主逻辑承载者）
+ESC[1;33m  ← 黄色粗体开始（骨干/核心链路函数，链路上最关键的几个节点）
+ESC[1;35m  ← 紫色粗体开始（叶子子函数 / 辅助调用 / 驱动回调）
 ESC[1;32m  ← 绿色粗体开始（资源分配动作: kzalloc, init, create 等）
 ESC[1;37m  ← 白色亮体开始（关键变量 / 数据结构名 / 重要标志位）
 ESC[1;31m  ← 红色粗体开始（关键转折点 / 失败返回，★ 标注用）
 ESC[90m    ← 灰色开始（注释、说明文字、行号）
 ESC[0m     ← 关闭所有颜色（每条着色文本结束必须加这个）
 ```
+
+### 三层配色规则（函数调用栈）
+
+画函数调用栈时，用三层颜色区分主次，让核心链路一眼可见：
+
+1. **蓝（ESC[1;34m）** = 核心入口函数——最外层、承载主逻辑的那个函数（如 `collapse_scan_mm_slot`）。
+2. **黄（ESC[1;33m）** = 骨干函数——链路上最关键的几个节点（如 `collapse_single_pmd` → `collapse_scan_pmd` → `collapse_huge_page` 这条主线）。
+3. **紫（ESC[1;35m）** = 叶子子函数——其余辅助/细节调用（`find_xxx`、`spin_lock`、`collect_xxx` 等）。
+
+即：**蓝 → 黄 → 紫 = 入口 → 骨干 → 细节**。青色留给更上层的框架/VFS 入口（如 `vfs_write`、`configfs_mkdir`）。**所有函数名都要上色，不许有裸露的函数名。**
 
 用法示例：`ESC[1;36mconfigfs_mkdir()ESC[0m` → 输出后 `configfs_mkdir()` 就变成青色。
 
@@ -72,7 +82,7 @@ ESC[0m     ← 关闭所有颜色（每条着色文本结束必须加这个）
 图下方必须附一行配色说明：
 
 ```
-配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心逻辑  ESC[1;35mPurpleESC[0m=底层回调  ESC[1;33mYellowESC[0m=路径  ESC[1;32mGreenESC[0m=分配  ESC[90mGrayESC[0m=注释
+配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心入口  ESC[1;33mYellowESC[0m=骨干函数  ESC[1;35mPurpleESC[0m=叶子子函数  ESC[1;32mGreenESC[0m=分配  ESC[90mGrayESC[0m=注释
 ```
 
 ---
@@ -102,7 +112,7 @@ ESC[1;36mentry_func()ESC[0m
   ├── ESC[1;34m[阶段四]ESC[0m  全局注册    ESC[1;33mlist_add → global_listESC[0m
   └── ESC[1;34m[阶段五]ESC[0m  收尾     ESC[1;35mxxx_debug_add()ESC[0m
 
-配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心  ESC[1;35mPurpleESC[0m=底层  ESC[1;33mYellowESC[0m=路径  ESC[90mGrayESC[0m=注释
+配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心入口  ESC[1;33mYellowESC[0m=骨干函数  ESC[1;35mPurpleESC[0m=叶子子函数  ESC[90mGrayESC[0m=注释
 
 ---
 
@@ -156,7 +166,7 @@ ESC[1;36mentry_func(cpu)ESC[0m                                                  
   ├─ ③ ESC[1;35mkobject_uevent(KOBJ_ADD)ESC[0m           ESC[90m← 通知 udevESC[0m
   └─ ⑤ [new] ESC[1;35mthermal_cooling_register(policy)ESC[0m ESC[90m← 温控可限制频率ESC[0m
 
-配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心流程  ESC[1;35mPurpleESC[0m=底层/驱动  ESC[1;33mYellowESC[0m=路径/链表  ESC[1;32mGreenESC[0m=分配/初始化  ESC[1;37mWhiteESC[0m=关键变量  ESC[1;31mRedESC[0m=失败/错误  ESC[90mGrayESC[0m=注释
+配色：ESC[1;36mCyanESC[0m=框架入口  ESC[1;34mBlueESC[0m=核心入口  ESC[1;33mYellowESC[0m=骨干函数  ESC[1;35mPurpleESC[0m=叶子子函数  ESC[1;32mGreenESC[0m=分配/初始化  ESC[1;37mWhiteESC[0m=关键变量  ESC[1;31mRedESC[0m=失败/错误  ESC[90mGrayESC[0m=注释
 
 ---
 
@@ -164,11 +174,12 @@ ESC[1;36mentry_func(cpu)ESC[0m                                                  
 
 | 层 | 颜色 | 占图比例建议 |
 |---|------|-------------|
-| 顶层框架入口 | ESC[1;36mCyanESC[0m | ~15% |
-| 中间核心逻辑 | ESC[1;34mBlueESC[0m | ~30% |
-| 底层驱动/回调 | ESC[1;35mPurpleESC[0m | ~25% |
-| 路径/文件名 | ESC[1;33mYellowESC[0m | ~10% |
+| 顶层框架入口 | ESC[1;36mCyanESC[0m | ~10% |
+| 核心入口函数 | ESC[1;34mBlueESC[0m | ~15% |
+| 骨干函数 | ESC[1;33mYellowESC[0m | ~20% |
+| 叶子子函数 | ESC[1;35mPurpleESC[0m | ~30% |
 | 资源分配操作 | ESC[1;32mGreenESC[0m | ~5% |
+| 关键变量 | ESC[1;37mWhiteESC[0m | ~5% |
 | 注释/行号 | ESC[90mGrayESC[0m | ~15% |
 
 ### 简易版（Simple Version）
@@ -265,9 +276,9 @@ ESC[1;36mentry_func(cpu)ESC[0m                                                  
 | 层级 | ANSI 代码 | 典型函数 |
 |------|----------|---------|
 | 顶层 (框架入口) | ESC[1;36m (cyan bold) | vfs_write(), configfs_mkdir(), syscall entry |
-| 中间层 (核心逻辑) | ESC[1;34m (blue bold) | xxx_bind(), xxx_init(), balance_pgdat() |
-| 底层 (驱动/回调) | ESC[1;35m (purple bold) | ops->xxx(), fsg_alloc(), shrink_node() |
-| 路径/文件名 | ESC[1;33m (yellow bold) | /sys/..., global_list, func_list |
+| 核心入口函数 | ESC[1;34m (blue bold) | collapse_scan_mm_slot(), xxx_init(), balance_pgdat() |
+| 骨干函数 | ESC[1;33m (yellow bold) | collapse_single_pmd(), collapse_huge_page(), shrink_node() |
+| 叶子子函数 | ESC[1;35m (purple bold) | find_xxx(), spin_lock(), collect_xxx() |
 | 分配/创建 | ESC[1;32m (green bold) | kzalloc(), init_rwsem(), kthread_run() |
 | 关键变量 | ESC[1;37m (white bright) | kswapd_order, func_list, max_active |
 | 注释/行号 | ESC[90m (gray) | // file.c:123, ← 说明文字 |
@@ -303,5 +314,6 @@ ESC[1;36mentry_func(cpu)ESC[0m                                                  
 - **用反引号包裹着色文本 → 颜色局部挂**
 - **用 \033 四字符代替真正的 ESC 字节 → 颜色全挂**
 - 没有颜色标注层级
+- **函数名裸露未上色（所有函数调用都必须套上颜色标记，不许出现光秃秃的函数名）**
 - 图后没有配色说明
 - 配色表中写了颜色名但没有附实际的 ANSI 标签
