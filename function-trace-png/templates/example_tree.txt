@@ -1,0 +1,21 @@
+@@@ example_overview | collapse_scan_mm_slot() — 概览 | linux-mainline/mm/khugepaged.c · 演示逐层注解与「为什么」
+khugepaged_do_scan(cc)                                  [[D]]// khugepaged.c:2971  线程的一"轮"扫描[[/]]
+  │
+  └─ [[B]]collapse_scan_mm_slot(progress_max, result, cc)[[/]]  [[D]]// :2841  核心入口：扫描"一个进程"的地址空间[[/]]
+       ├─ [[C]]① 取扫描游标[[/]]   [[W]]mm_slot[[/]]=上次断点 / 为空则从头
+       │    [[D]]为什么：一次扫不完一个进程，跨轮记住"扫到哪"[[/]]
+       ├─ [[C]]② 上锁[[/]]   [[P]]mmap_read_trylock(mm)[[/]]（[[W]]mm->mmap_lock 读锁[[/]]）
+       │    [[D]]为什么用 trylock：抢不到就跳过该 mm，绝不死等[[/]]
+       ├─ [[C]]③ 遍历 VMA[[/]]   [[P]]for_each_vma[[/]] → 每 2M 一个 PMD
+       │     └─ [[Y]]collapse_single_pmd()[[/]]   [[D]]→ 见图《匿名页路径》/《文件页路径》[[/]]
+       └─ [[C]]④ 推进游标[[/]]   到头则 [[W]]mm_slot=NULL[[/]] → [[P]]collect_mm_slot()[[/]]
+
+@@@ example_path | 单分支示例 — 每处检查都带「为什么」 | 演示"失败路径"与"动机注释"的写法
+[[B]]some_scan(addr)[[/]]                              [[D]]// :100  给一段页表"体检"[[/]]
+  ├─ [[P]]find_pmd_or_thp_or_none()[[/]]                [[D]]// 定位并校验 PMD[[/]]
+  ├─ 空页超 [[W]]max_ptes_none[[/]] → [[R]]失败[[/]]
+  │    [[D]]为什么查：大页是整块分配的；空页越多=越稀疏，合并会为没用到的[[/]]
+  │    [[D]]虚地址占内存，故用比例上限控制"要多满才值得合"（默认 511）[[/]]
+  ├─ [[W]]__set_bit(i, present_ptes)[[/]]               [[D]]// 位图: 第 i 位=1 表示第 i 个 4K 页已占用[[/]]
+  │    [[D]]为什么攒位图：给后面选"合并成多大"当依据[[/]]
+  └─ SUCCEED → [[P]]mmap_read_unlock(mm)[[/]]           [[D]]// 为什么先放锁：分配大页可能触发回收，不能持锁[[/]]
